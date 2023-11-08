@@ -1,0 +1,7 @@
+name: plassembler
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - plassembler=1.4.1
