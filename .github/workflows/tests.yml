@@ -35,6 +35,10 @@ jobs:
       run: bash .github/scripts/simulate_short_reads.sh
     - name: Simulate Long Reads
       run: bash .github/scripts/simulate_long_reads.sh
+    - name: Create plassembler environment
+      run: bash .github/scripts/create_plassembler_environment.sh
+    - name: Create plassembler db
+      run: bash .github/scripts/create_plassembler_db.sh
     - name: Run Pipeline
       run: bash .github/scripts/run_pipeline.sh
     - name: Create Output Checking Environment

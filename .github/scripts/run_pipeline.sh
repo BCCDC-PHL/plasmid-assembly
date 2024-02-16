@@ -13,6 +13,7 @@ nextflow run main.nf \
 	 --cache ${HOME}/.conda/envs \
 	 --fastq_input .github/data/fastq \
 	 --fastq_input_long .github/data/fastq_long \
+	 --db plassembler-db \
 	 --outdir .github/data/test_output \
 	 -with-report .github/data/test_output/nextflow_report.html \
  	 -with-trace .github/data/test_output/nextflow_trace.tsv
