@@ -11,7 +11,7 @@ mkdir -p .github/data/fastq_long
 
 while IFS=',' read -r sample_id assembly; do
     badread simulate \
-	--seed ${seed} \
+	--seed 42 \
 	--reference ${assembly} \
 	--length 50000,5000 \
 	--quantity 15x \
