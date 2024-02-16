@@ -1,4 +1,7 @@
+[![Tests](https://github.com/BCCDC-PHL/plasmid-assembly/actions/workflows/tests.yml/badge.svg)](https://github.com/BCCDC-PHL/plasmid-assembly/actions/workflows/tests.yml)
+
 # plasmid-assembly
+
 A pipeline for high-quality plasmid assemblies.
 
 Optionally annotate genes. Collects quality info on both incoming and outgoing datasets. 
