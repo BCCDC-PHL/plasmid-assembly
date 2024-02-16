@@ -6,6 +6,8 @@ sed -i 's/cpus = 8/cpus = 4/g' nextflow.config
 sed -i 's/cpus = 12/cpus = 4/g' nextflow.config
 sed -i 's/cpus = 16/cpus = 4/g' nextflow.config 
 
+export TERM=linux
+
 nextflow run main.nf \
 	 -profile conda \
 	 --cache ${HOME}/.conda/envs \
