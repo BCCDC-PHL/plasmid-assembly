@@ -14,7 +14,7 @@ while IFS=',' read -r sample_id assembly; do
 	--seed 42 \
 	--reference ${assembly} \
 	--length 50000,5000 \
-	--quantity 15x \
+	--quantity 10x \
 	--junk_reads 1 \
 	--random_reads 1 \
 	--chimeras 1 \
