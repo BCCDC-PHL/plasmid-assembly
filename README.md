@@ -6,6 +6,24 @@ A pipeline for high-quality plasmid assemblies.
 
 Optionally annotate genes. Collects quality info on both incoming and outgoing datasets. 
 
+```mermaid
+flowchart TD
+  short_reads --> fastp(fastp)
+  fastp -- trimmed_short_reads --> plassembler(plassembler)
+  long_reads --> filtlong(filtlong)
+  filtlong -- filtered_long_reads --> plassembler
+  plassembler --> assembly[assembly]
+  assembly --> prokka(prokka*)
+  assembly --> bakta(bakta*)
+  assembly --> quast(quast)
+  assembly --> bandage(bandage)
+  prokka --> prokka_annotated_assembly
+  bakta --> bakta_annotated_assembly
+  quast --> assembly_qc
+  bandage --> assembly_diagram
+```
+\*Optional processes
+
 ## Analyses
 
 * Read trimming & QC: [fastp](https://github.com/OpenGene/fastp) and [filtlong](https://github.com/rrwick/Filtlong)
