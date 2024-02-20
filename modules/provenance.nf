@@ -34,6 +34,6 @@ process pipeline_provenance {
   """
   printf -- "- pipeline_name: ${pipeline_name}\\n"             >> pipeline_provenance.yml
   printf -- "  pipeline_version: ${pipeline_version}\\n"       >> pipeline_provenance.yml
-  printf -- "- timestamp_analysis_start: ${analysis_start}\\n" >> pipeline_provenance.yml
+  printf -- "  timestamp_analysis_start: ${analysis_start}\\n" >> pipeline_provenance.yml
   """
 }
