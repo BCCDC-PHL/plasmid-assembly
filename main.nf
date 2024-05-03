@@ -1,32 +1,41 @@
 #!/usr/bin/env nextflow
 
-import java.time.LocalDateTime
-
 nextflow.enable.dsl = 2
 
 include { hash_files }                 from './modules/hash_files.nf'
-include { fastp }                      from './modules/fastp.nf'
-include { fastp_json_to_csv }          from './modules/fastp.nf'
+include { fastp }                      from './modules/short_read_qc.nf'
+include { fastp_json_to_csv }          from './modules/short_read_qc.nf'
 include { filtlong }                   from './modules/long_read_qc.nf'
 include { nanoq as nanoq_pre_filter }  from './modules/long_read_qc.nf'
 include { nanoq as nanoq_post_filter } from './modules/long_read_qc.nf'
 include { merge_nanoq_reports }        from './modules/long_read_qc.nf'
-include { plassembler }                from './modules/plassembler.nf'
-include { prokka }                     from './modules/prokka.nf'
-include { bakta }                      from './modules/bakta.nf'
-include { quast }                      from './modules/quast.nf'
-include { parse_quast_report }         from './modules/quast.nf'
-include { bandage }                    from './modules/long_read_qc.nf'
+include { flye }                       from './modules/assembly.nf'
+include { reorient_contigs }           from './modules/assembly.nf'
+include { plassembler }                from './modules/assembly.nf'
+include { medaka as medaka_round_1 }   from './modules/polishing.nf'
+include { medaka as medaka_round_2 }   from './modules/polishing.nf'
+include { polypolish }                 from './modules/polishing.nf'
+include { prokka }                     from './modules/annotation.nf'
+include { bakta }                      from './modules/annotation.nf'
+include { ale }                        from './modules/assembly_qc.nf'
+include { quast }                      from './modules/assembly_qc.nf'
+include { parse_quast_report }         from './modules/assembly_qc.nf'
+include { bandage }                    from './modules/assembly_qc.nf'
 include { pipeline_provenance }        from './modules/provenance.nf'
 include { collect_provenance }         from './modules/provenance.nf'
 
 
 workflow {
-    ch_start_time = Channel.of(LocalDateTime.now())
-    ch_pipeline_name = Channel.of(workflow.manifest.name)
-    ch_pipeline_version = Channel.of(workflow.manifest.version)
 
-    ch_pipeline_provenance = pipeline_provenance(ch_pipeline_name.combine(ch_pipeline_version).combine(ch_start_time))
+    ch_workflow_metadata = Channel.value([
+	workflow.sessionId,
+	workflow.runName,
+	workflow.manifest.name,
+	workflow.manifest.version,
+	workflow.start,
+    ])
+
+    ch_pipeline_provenance = pipeline_provenance(ch_workflow_metadata)
 
     if (params.samplesheet_input != 'NO_FILE') {
 	ch_fastq = Channel.fromPath(params.samplesheet_input).splitCsv(header: true).map{ it -> [it['ID'], [it['R1'], it['R2'], it['LONG']]] }
@@ -46,23 +55,52 @@ workflow {
     hash_files(ch_fastq.combine(Channel.of("fastq-input")))
 
     fastp(ch_short_reads)
+
     fastp_json_to_csv(fastp.out.json)
+
     nanoq_pre_filter(ch_long_reads.combine(Channel.of("pre_filter")))
+
     filtlong(ch_long_reads)
+
     nanoq_post_filter(filtlong.out.filtered_reads.combine(Channel.of("post_filter")))
+
     merge_nanoq_reports(nanoq_pre_filter.out.report.join(nanoq_post_filter.out.report))
-    plassembler(fastp.out.trimmed_reads.join(filtlong.out.filtered_reads).map{ it -> [it[0], [it[1], it[2], it[3]]] }.combine(ch_db))
-    ch_assembly = plassembler.out.plassembler_assembly
+
+    ch_cleaned_reads = fastp.out.trimmed_reads.join(filtlong.out.filtered_reads).map{ it -> [it[0], [it[1], it[2], it[3]]] }
+
+    flye(ch_cleaned_reads)
+
+    ch_chromosome_assembly = flye.out.chromosome_assembly
+
+    reorient_contigs(ch_chromosome_assembly)
+
+    ch_chromosome_assembly = reorient_contigs.out.reoriented_assembly
+
+    ch_flye_outdir = flye.out.flye_outdir
+
+    ale(ch_cleaned_reads.join(ch_chromosome_assembly))
+
+    plassembler(ch_cleaned_reads.join(ch_flye_outdir).combine(ch_db))
+
+    if (!params.skip_polishing) {
+	if (!params.skip_medaka) {
+	    ch_assembly = medaka_round_1(ch_cleaned_reads.join(ch_chromosome_assembly))
+	    ch_assembly = medaka_round_2(ch_cleaned_reads.join(ch_chromosome_assembly))
+	}
+	if (!params.skip_polypolish) {
+	    ch_assembly = polypolish(ch_cleaned_reads.join(ch_chromosome_assembly))
+	}
+    }
 
     if (params.prokka) {
-	prokka(ch_assembly)
+	prokka(ch_chromosome_assembly)
     }
 
     if (params.bakta) {
-	bakta(ch_assembly)
+	bakta(ch_chromosome_assembly)
     }
 
-    quast(ch_assembly)
+    quast(ch_chromosome_assembly)
     // bandage(plassembler.out.assembly_graph)
 
     parse_quast_report(quast.out.tsv)

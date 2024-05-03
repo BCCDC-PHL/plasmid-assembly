@@ -1,4 +1,4 @@
-name: plassembler
+name: plasmid-assembly-plassembler
 channels:
   - conda-forge
   - bioconda

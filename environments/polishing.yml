@@ -1,0 +1,9 @@
+name: plasmid-assembly-polishing
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - medaka=1.11.3
+  - polypolish=0.6.0
+  - bwa=0.7.18

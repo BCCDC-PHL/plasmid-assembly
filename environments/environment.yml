@@ -11,4 +11,5 @@ dependencies:
   - nanoq=0.9.0
   - prokka=1.14.5
   - quast=5.0.2
+  - ale-core=20220503
   - bandage=0.8.1

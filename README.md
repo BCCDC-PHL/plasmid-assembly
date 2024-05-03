@@ -2,7 +2,7 @@
 
 # plasmid-assembly
 
-A pipeline for high-quality plasmid assemblies.
+A pipeline for high-quality plasmid assemblies. This pipeline is largely based on [hybracter](https://github.com/gbouras13/hybracter).
 
 Optionally annotate genes. Collects quality info on both incoming and outgoing datasets. 
 
@@ -11,7 +11,9 @@ flowchart TD
   short_reads --> fastp(fastp)
   fastp -- trimmed_short_reads --> plassembler(plassembler)
   long_reads --> filtlong(filtlong)
-  filtlong -- filtered_long_reads --> plassembler
+  filtlong -- filtered_long_reads --> flye(flye)
+  flye --> medaka(medaka)
+  flye --> plassembler
   plassembler --> assembly[assembly]
   assembly --> prokka(prokka*)
   assembly --> bakta(bakta*)

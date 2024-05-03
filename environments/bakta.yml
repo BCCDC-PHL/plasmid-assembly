@@ -1,4 +1,4 @@
-name: bakta
+name: plasmid-assembly-bakta
 channels:
   - conda-forge
   - bioconda
