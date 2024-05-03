@@ -16,16 +16,17 @@ flowchart TD
   medaka_1 --> reorient_contigs(reorient_contigs)
   reorient_contigs --> medaka_2("medaka (round 2)")
   medaka_2 --> polypolish(polypolish)
+  polypolish --> chromosome_assembly["chromosome assembly"]
   flye --> plassembler
-  plassembler --> assembly[assembly]
-  assembly --> prokka(prokka*)
-  assembly --> bakta(bakta*)
-  assembly --> quast(quast)
-  assembly --> bandage(bandage)
+  plassembler --> plasmid_assemblies["plasmid assemblies"]
+  chromosome_assembly --> full_assembly["full assembly"]
+  plasmid_assemblies --> full_assembly
+  full_assembly --> prokka(prokka*)
+  full_assembly --> bakta(bakta*)
+  full_assembly --> quast(quast)
   prokka --> prokka_annotated_assembly
   bakta --> bakta_annotated_assembly
   quast --> assembly_qc
-  bandage --> assembly_diagram
 ```
 \*Optional processes
 
