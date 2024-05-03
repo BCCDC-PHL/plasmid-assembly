@@ -12,7 +12,10 @@ flowchart TD
   fastp -- trimmed_short_reads --> plassembler(plassembler)
   long_reads --> filtlong(filtlong)
   filtlong -- filtered_long_reads --> flye(flye)
-  flye --> medaka(medaka)
+  flye -- chromosomal_contigs --> medaka_1("medaka (round 1)")
+  medaka_1 --> reorient_contigs(reorient_contigs)
+  reorient_contigs --> medaka_2("medaka (round 2)")
+  medaka_2 --> polypolish(polypolish)
   flye --> plassembler
   plassembler --> assembly[assembly]
   assembly --> prokka(prokka*)
