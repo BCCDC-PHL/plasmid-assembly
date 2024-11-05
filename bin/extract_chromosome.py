@@ -52,9 +52,9 @@ def mark_chromosome_contigs(assembly_info, min_chromosome_contig_length):
     """
     for contig in assembly_info:
         if contig['length'] >= min_chromosome_contig_length and contig['circular'] == 'Y':
-            contig['chromosome'] = True
+            contig['is_chromosome'] = True
         else:
-            contig['chromosome'] = False
+            contig['is_chromosome'] = False
 
     return assembly_info
 
@@ -96,6 +96,7 @@ def parse_assembly_fasta(assembly_input_path):
 
 def main(args):
     assembly_info = parse_flye_assembly_info(args.assembly_info)
+    assembly_info = mark_chromosome_contigs(assembly_info, args.min_chromosome_contig_length)
     assembly = parse_assembly_fasta(args.assembly_input)
 
     for contig in assembly:
@@ -109,10 +110,25 @@ def main(args):
             if contig['length'] >= args.min_chromosome_contig_length and contig['circular'] == 'Y':
                 f.write(f">{contig['seq_name']} length={contig['length']} circular={contig['circular']}\n")
                 for i in range(0, len(contig['seq']), 80):
-                    f.write(f"\n{contig['seq'][i:i+80]}\n")
+                    f.write(f"{contig['seq'][i:i+80]}\n")
 
+    if args.sample_id:
+        for contig in assembly_info:
+            contig['sample_id'] = args.sample_id
+    output_fieldnames = [
+        'sample_id',
+        'seq_name',
+        'length',
+        'coverage',
+        'circular',
+        'is_chromosome',
+        'repeat',
+        'multiplicity',
+        'alternative_group',
+        'graph_path',
+    ]
     with open(args.output_assembly_info, "w") as f:
-        writer = csv.DictWriter(f, fieldnames=assembly_info[0].keys(), extrasaction='ignore', dialect='unix', quoting=csv.QUOTE_MINIMAL)
+        writer = csv.DictWriter(f, fieldnames=output_fieldnames, extrasaction='ignore', dialect='unix', quoting=csv.QUOTE_MINIMAL)
         writer.writeheader()
         for contig in assembly_info:
             writer.writerow(contig)
@@ -120,6 +136,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument("--sample-id", help="Sample ID")
     parser.add_argument("--assembly-info", help="Assembly info file from Flye")
     parser.add_argument("--assembly-input", help="Assembly fasta file")
     parser.add_argument("--min-chromosome-contig-length", type=int, default=1000000, help="Minimum length of a contig to be considered a chromosome (default: 1000000)")

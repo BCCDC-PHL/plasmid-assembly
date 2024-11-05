@@ -32,6 +32,7 @@ process flye {
 	> ${sample_id}_flye_hybrid_assembly_completeness.csv
 
     extract_chromosome.py \
+	--sample-id ${sample_id} \
 	--min-chromosome-contig-length ${params.chromosome_length} \
 	--assembly-info ${sample_id}_flye_hybrid_assembly_info.tsv \
 	--assembly-input ${sample_id}_flye_hybrid.fa \
@@ -75,7 +76,7 @@ process plassembler {
     tuple val(sample_id), path(reads), path(flye_output), path(database)
 
     output:
-    tuple val(sample_id), path("${sample_id}_plassembler_hybrid_plasmids.fa"),                                 emit: plassembler_plasmids
+    tuple val(sample_id), path("${sample_id}_plassembler_hybrid_plasmids.fa"),                                 emit: plasmid_assembly
     tuple val(sample_id), path("${sample_id}_plassembler_summary.tsv"),                                        emit: plassembler_summary
     tuple val(sample_id), path("${sample_id}_plassembler.log"),                                                emit: plassembler_log
     tuple val(sample_id), path("${sample_id}_plassembler_provenance.yml"),                                     emit: provenance
@@ -110,5 +111,26 @@ process plassembler {
     cp ${sample_id}_plassembler_output/plassembler_plasmids.fasta ${sample_id}_plassembler_hybrid_plasmids.fa
     cp ${sample_id}_plassembler_output/plassembler_summary.tsv ${sample_id}_plassembler_summary.tsv
     cp ${sample_id}_plassembler_output/plassembler_*.log ${sample_id}_plassembler.log
+    """
+}
+
+
+process combine_chromosome_and_plasmid_assemblies {
+
+    tag { sample_id }
+
+    executor 'local'
+
+    publishDir "${params.outdir}/${sample_id}", pattern: "${sample_id}_hybrid.fa", mode: 'copy'
+
+    input:
+    tuple val(sample_id), path(chromosome_assembly), path(plasmid_assembly)
+
+    output:
+    tuple val(sample_id), path("${sample_id}_hybrid.fa")
+
+    script:
+    """
+    cat ${chromosome_assembly} ${plasmid_assembly} > ${sample_id}_hybrid.fa
     """
 }

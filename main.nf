@@ -12,6 +12,7 @@ include { merge_nanoq_reports }        from './modules/long_read_qc.nf'
 include { flye }                       from './modules/assembly.nf'
 include { reorient_contigs }           from './modules/assembly.nf'
 include { plassembler }                from './modules/assembly.nf'
+include { combine_chromosome_and_plasmid_assemblies } from './modules/assembly.nf'
 include { medaka as medaka_round_1 }   from './modules/polishing.nf'
 include { medaka as medaka_round_2 }   from './modules/polishing.nf'
 include { polypolish }                 from './modules/polishing.nf'
@@ -72,9 +73,21 @@ workflow {
 
     ch_chromosome_assembly = flye.out.chromosome_assembly
 
+    if (!params.skip_polishing && !params.skip_medaka) {
+	ch_chromosome_assembly = medaka_round_1(ch_cleaned_reads.join(ch_chromosome_assembly))
+    }
+
     reorient_contigs(ch_chromosome_assembly)
 
     ch_chromosome_assembly = reorient_contigs.out.reoriented_assembly
+
+    if (!params.skip_polishing && !params.skip_medaka) {
+	ch_chromosome_assembly = medaka_round_2(ch_cleaned_reads.join(ch_chromosome_assembly))
+    }
+
+    if (!params.skip_polishing && !params.skip_polypolish) {
+	ch_chromosome_assembly = polypolish(ch_cleaned_reads.join(ch_chromosome_assembly))
+    }
 
     ch_flye_outdir = flye.out.flye_outdir
 
@@ -82,25 +95,19 @@ workflow {
 
     plassembler(ch_cleaned_reads.join(ch_flye_outdir).combine(ch_db))
 
-    if (!params.skip_polishing) {
-	if (!params.skip_medaka) {
-	    ch_assembly = medaka_round_1(ch_cleaned_reads.join(ch_chromosome_assembly))
-	    ch_assembly = medaka_round_2(ch_cleaned_reads.join(ch_chromosome_assembly))
-	}
-	if (!params.skip_polypolish) {
-	    ch_assembly = polypolish(ch_cleaned_reads.join(ch_chromosome_assembly))
-	}
-    }
+    ch_plasmid_assembly = plassembler.out.plasmid_assembly
+
+    ch_full_assembly = combine_chromosome_and_plasmid_assemblies(ch_chromosome_assembly.join(ch_plasmid_assembly))
 
     if (params.prokka) {
-	prokka(ch_chromosome_assembly)
+	prokka(ch_full_assembly)
     }
 
     if (params.bakta) {
-	bakta(ch_chromosome_assembly)
+	bakta(ch_full_assembly)
     }
 
-    quast(ch_chromosome_assembly)
+    quast(ch_full_assembly)
     // bandage(plassembler.out.assembly_graph)
 
     parse_quast_report(quast.out.tsv)
@@ -112,6 +119,10 @@ workflow {
 	if (params.hybrid || params.long_only) {
 	    merge_nanoq_reports.out.map{ it -> it[1] }.collectFile(keepHeader: true, sort: { it.text }, name: "${params.collected_outputs_prefix}_nanoq.csv", storeDir: "${params.outdir}")
 	}
+	flye.out.assembly_info.map{ it -> it[1] }.collectFile(keepHeader: true, sort: { it.text }, name: "${params.collected_outputs_prefix}_flye_assembly_info.csv", storeDir: "${params.outdir}")
+	flye.out.assembly_completeness.map{ it -> it[1] }.collectFile(keepHeader: true, sort: { it.text }, name: "${params.collected_outputs_prefix}_flye_assembly_completeness.csv", storeDir: "${params.outdir}")
+	plassembler.out.plassembler_summary.map{ it -> it[1] }.collectFile(keepHeader: true, sort: { it.text }, name: "${params.collected_outputs_prefix}_plassembler_summary.tsv", storeDir: "${params.outdir}")
+	ale.out.map{ it -> it[1] }.collectFile(keepHeader: true, sort: { it.text }, name: "${params.collected_outputs_prefix}_ale.csv", storeDir: "${params.outdir}")
     }
 
     //
