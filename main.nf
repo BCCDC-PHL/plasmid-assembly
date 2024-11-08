@@ -22,11 +22,15 @@ include { collect_provenance }         from './modules/provenance.nf'
 
 
 workflow {
-    ch_start_time = Channel.of(LocalDateTime.now())
-    ch_pipeline_name = Channel.of(workflow.manifest.name)
-    ch_pipeline_version = Channel.of(workflow.manifest.version)
+    ch_workflow_metadata = Channel.value([
+	workflow.sessionId,
+	workflow.runName,
+	workflow.manifest.name,
+	workflow.manifest.version,
+	workflow.start,
+    ])
 
-    ch_pipeline_provenance = pipeline_provenance(ch_pipeline_name.combine(ch_pipeline_version).combine(ch_start_time))
+    ch_pipeline_provenance = pipeline_provenance(ch_workflow_metadata)
 
     if (params.samplesheet_input != 'NO_FILE') {
 	ch_fastq = Channel.fromPath(params.samplesheet_input).splitCsv(header: true).map{ it -> [it['ID'], [it['R1'], it['R2'], it['LONG']]] }
