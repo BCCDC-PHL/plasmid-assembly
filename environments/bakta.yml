@@ -1,7 +1,6 @@
-name: bakta
+name: plasmid-assembly-bakta
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - bakta=1.8.1
