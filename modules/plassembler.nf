@@ -16,7 +16,7 @@ process plassembler {
     tuple val(sample_id), path("${sample_id}_plassembler_summary.tsv"),                                        emit: plassembler_summary
     tuple val(sample_id), path("${sample_id}_plassembler.log"),                                                emit: plassembler_log
     tuple val(sample_id), path("${sample_id}_flye_long.fa"), path("${sample_id}_flye_long.gfa"),               emit: flye_assembly
-    tuple val(sample_id), path("${sample_id}_unicycler_hybrid.fa"), path("${sample_id}_unicycler_hybrid.gfa"), emit: unicycler_assembly
+    tuple val(sample_id), path("${sample_id}_unicycler_hybrid.fa"), path("${sample_id}_unicycler_hybrid.gfa"), emit: unicycler_assembly, optional: true
     tuple val(sample_id), path("${sample_id}_plassembler_provenance.yml"),                                     emit: provenance
 
     script:
@@ -50,7 +50,9 @@ process plassembler {
     cp ${sample_id}_assembly/flye_output/assembly.fasta ${sample_id}_flye_long.fa
     cp ${sample_id}_assembly/flye_output/assembly_graph.gfa ${sample_id}_flye_long.gfa
 
-    cp ${sample_id}_assembly/unicycler_output/assembly.fasta ${sample_id}_unicycler_hybrid.fa
-    cp ${sample_id}_assembly/unicycler_output/assembly.gfa ${sample_id}_unicycler_hybrid.gfa
+    if [ -f ${sample_id}_assembly/unicycler_output/assembly.fasta ]; then
+        cp ${sample_id}_assembly/unicycler_output/assembly.fasta ${sample_id}_unicycler_hybrid.fa
+        cp ${sample_id}_assembly/unicycler_output/assembly.gfa ${sample_id}_unicycler_hybrid.gfa
+    fi
     """
 }
