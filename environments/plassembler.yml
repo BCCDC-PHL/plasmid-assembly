@@ -1,7 +1,6 @@
-name: plassembler
+name: plasmid-assembly-plassembler
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - plassembler=1.5.0
